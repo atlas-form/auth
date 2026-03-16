@@ -3,24 +3,24 @@ mod user;
 
 use std::sync::Arc;
 
+use auth::{AuthApiDoc, auth_routes};
 use axum::{Extension, Router};
-use toolcraft_axum_kit::middleware::cors::create_cors;
+use toolcraft_axum_kit::{Empty, middleware::cors::create_cors};
 use toolcraft_jwt::Jwt;
+use user::{UserApiDoc, user_routes};
 use utoipa::{
     OpenApi,
     openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
 };
 use utoipa_swagger_ui::SwaggerUi;
 
-use auth::{AuthApiDoc, auth_routes};
-use user::{UserApiDoc, user_routes};
-
 #[derive(OpenApi)]
 #[openapi(
     nest(
         (path = "/auth", api = AuthApiDoc),
         (path = "/user", api = UserApiDoc),
-    )
+    ),
+    components(schemas(Empty))
 )]
 struct ApiDoc;
 
