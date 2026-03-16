@@ -1,0 +1,16 @@
+[package]
+name = "repo"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+db_core.workspace = true
+sea-orm = { version = "2.0.0-rc", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
+tokio.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+validator.workspace = true
+time.workspace = true
+async-trait.workspace = true
+uuid = { version = "1", features = ["v4"] }

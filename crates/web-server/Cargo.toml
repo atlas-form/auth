@@ -1,0 +1,31 @@
+[package]
+name = "web-server"
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+# internal dependencies
+db_core.workspace = true
+service.workspace = true
+repo.workspace = true
+
+# external dependencies
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tracing-appender.workspace = true
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+validator.workspace = true
+thiserror.workspace = true
+time.workspace = true
+axum = {version = "0.8.8", features = ["macros", "multipart"]}
+reqwest = { version = "0.11", features = ["json"] }
+utoipa = { version = "5", features = ["axum_extras"] }
+utoipa-swagger-ui = { version = "9", features = ["axum"] }
+utoipa-axum = { version = "0.2" }
+toolcraft-axum-kit = {version = "0.2.5"}
+toolcraft-config= {version = "0.2.0"}
+toolcraft-jwt= {version = "0.2.0"}
+toolcraft-utils= {version = "0.2.2"}
+# model-gateway-rs = { path = "../../../model-gateway-rs" }
