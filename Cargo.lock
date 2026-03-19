@@ -3694,9 +3694,9 @@ dependencies = [
 
 [[package]]
 name = "toolcraft-axum-kit"
-version = "0.2.8"
+version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d11fe47b8c1aab47724513965d35a0d3e592d06be45eb443e8f2546c0827385"
+checksum = "9545ee8bea7140e79b98d483f2e5f7cb6e2c0f9666356c8c621d42d35b58bd56"
 dependencies = [
  "axum",
  "serde",
@@ -3721,9 +3721,9 @@ dependencies = [
 
 [[package]]
 name = "toolcraft-jwt"
-version = "0.3.3"
+version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d6a0ebe01cf66c319547f7298b9db42326a69ae5c75ce59f7b6965d3c2cfb54f"
+checksum = "2dc87252346da4de9307cce62ded4e1e0ca3458e5b99eaa6f0118c14bc86fb42"
 dependencies = [
  "chrono",
  "jsonwebtoken",
