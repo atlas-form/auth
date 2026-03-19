@@ -2,6 +2,7 @@
 /logs
 .env
 /sql
+/dist
 
 #MacOS
 **/.DS_Store

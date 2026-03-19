@@ -360,6 +360,32 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
+name = "auth-server"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "db-core-rs",
+ "repo",
+ "serde",
+ "serde_json",
+ "service",
+ "thiserror",
+ "time",
+ "tokio",
+ "toolcraft-axum-kit",
+ "toolcraft-config",
+ "toolcraft-jwt",
+ "toolcraft-utils",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
+ "utoipa",
+ "utoipa-axum",
+ "utoipa-swagger-ui",
+ "validator",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3969,32 +3995,6 @@ dependencies = [
  "hashbrown 0.15.5",
  "indexmap",
  "semver",
-]
-
-[[package]]
-name = "web-server"
-version = "0.1.0"
-dependencies = [
- "axum",
- "db-core-rs",
- "repo",
- "serde",
- "serde_json",
- "service",
- "thiserror",
- "time",
- "tokio",
- "toolcraft-axum-kit",
- "toolcraft-config",
- "toolcraft-jwt",
- "toolcraft-utils",
- "tracing",
- "tracing-appender",
- "tracing-subscriber",
- "utoipa",
- "utoipa-axum",
- "utoipa-swagger-ui",
- "validator",
 ]
 
 [[package]]

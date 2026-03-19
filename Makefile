@@ -1,4 +1,7 @@
-.PHONY: help fresh-db postgres init build test examples clean
+.PHONY: help fresh-db postgres init build test examples clean cross-setup-linux cross-build-web-server-linux build-linux-bundle
+
+CROSS_DOCKER_PLATFORM ?= linux/amd64
+CROSS_LINUX_TARGET ?= x86_64-unknown-linux-gnu
 
 # Default target
 help:
@@ -11,6 +14,9 @@ help:
 	@echo "  make test        - Run all tests"
 	@echo "  make examples    - Build all examples"
 	@echo "  make clean       - Clean build artifacts"
+	@echo "  make cross-setup-linux            - Install non-host Rust toolchain for cross"
+	@echo "  make cross-build-web-server-linux - Cross-build web-server for Linux"
+	@echo "  make build-linux-bundle           - Build Linux binary and package config"
 	@echo ""
 	@echo "  make migrate-up     - Run migrations"
 	@echo "  make migrate-down   - Rollback migrations"
@@ -38,6 +44,16 @@ examples:
 
 clean:
 	cargo clean
+
+# Cross compile helpers for Apple Silicon -> Linux/amd64
+cross-setup-linux:
+	rustup toolchain add nightly-$(CROSS_LINUX_TARGET) --profile minimal --force-non-host
+
+cross-build-web-server-linux:
+	CROSS_CONTAINER_OPTS="--platform $(CROSS_DOCKER_PLATFORM)" cross build --target $(CROSS_LINUX_TARGET) --release -p web-server
+
+build-linux-bundle:
+	@./scripts/build_linux_bundle.sh
 
 # Migration commands
 migrate-up:
