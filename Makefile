@@ -50,7 +50,7 @@ cross-setup-linux:
 	rustup toolchain add nightly-$(CROSS_LINUX_TARGET) --profile minimal --force-non-host
 
 cross-build-web-server-linux:
-	CROSS_CONTAINER_OPTS="--platform $(CROSS_DOCKER_PLATFORM)" cross build --target $(CROSS_LINUX_TARGET) --release -p web-server
+	CROSS_CONTAINER_OPTS="--platform $(CROSS_DOCKER_PLATFORM)" cross build --target $(CROSS_LINUX_TARGET) --release -p auth-server
 
 build-linux-bundle:
 	@./scripts/build_linux_bundle.sh

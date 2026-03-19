@@ -1,9 +1,9 @@
 use axum::{Extension, Json};
-use toolcraft_axum_kit::{ApiError, CommonOk, Empty, IntoCommonResponse, ResponseResult};
-use toolcraft_axum_kit::middleware::auth_mw::UserId;
-use validator::Validate;
-
 use service::api::auth::AuthApi;
+use toolcraft_axum_kit::{
+    ApiError, CommonOk, Empty, IntoCommonResponse, ResponseResult, middleware::auth_mw::AuthUser,
+};
+use validator::Validate;
 
 use crate::{
     dto::auth::{UpdateEmailRequest, UpdatePasswordRequest, UserResponse},
@@ -26,9 +26,9 @@ fn svc(e: db_core::Error) -> ApiError {
         (status = 404, description = "User not found"),
     )
 )]
-pub async fn me(Extension(UserId(user_id)): Extension<UserId>) -> ResponseResult<UserResponse> {
+pub async fn me(Extension(auth_user): Extension<AuthUser>) -> ResponseResult<UserResponse> {
     let api = AuthApi::new(get_default_ctx());
-    let user = api.get_user(&user_id).await.map_err(svc)?;
+    let user = api.get_user(&auth_user.user_id).await.map_err(svc)?;
 
     Ok(UserResponse {
         id: user.id,
@@ -55,14 +55,16 @@ pub async fn me(Extension(UserId(user_id)): Extension<UserId>) -> ResponseResult
     )
 )]
 pub async fn update_password(
-    Extension(UserId(user_id)): Extension<UserId>,
+    Extension(auth_user): Extension<AuthUser>,
     Json(req): Json<UpdatePasswordRequest>,
 ) -> ResponseResult<Empty> {
-    req.validate().map_err(Error::Validation).map_err(ApiError::from)?;
+    req.validate()
+        .map_err(Error::Validation)
+        .map_err(ApiError::from)?;
 
     let api = AuthApi::new(get_default_ctx());
     api.update_password(
-        &user_id,
+        &auth_user.user_id,
         service::dto::auth::UpdatePasswordRequest {
             old_password: req.old_password,
             new_password: req.new_password,
@@ -88,13 +90,17 @@ pub async fn update_password(
     )
 )]
 pub async fn update_email(
-    Extension(UserId(user_id)): Extension<UserId>,
+    Extension(auth_user): Extension<AuthUser>,
     Json(req): Json<UpdateEmailRequest>,
 ) -> ResponseResult<Empty> {
-    req.validate().map_err(Error::Validation).map_err(ApiError::from)?;
+    req.validate()
+        .map_err(Error::Validation)
+        .map_err(ApiError::from)?;
 
     let api = AuthApi::new(get_default_ctx());
-    api.update_email(&user_id, req.email).await.map_err(svc)?;
+    api.update_email(&auth_user.user_id, req.email)
+        .await
+        .map_err(svc)?;
 
     Ok(Empty.into_common_response().to_json())
 }
@@ -110,11 +116,9 @@ pub async fn update_email(
         (status = 404, description = "User not found"),
     )
 )]
-pub async fn verify_email(
-    Extension(UserId(user_id)): Extension<UserId>,
-) -> ResponseResult<Empty> {
+pub async fn verify_email(Extension(auth_user): Extension<AuthUser>) -> ResponseResult<Empty> {
     let api = AuthApi::new(get_default_ctx());
-    api.verify_email(&user_id).await.map_err(svc)?;
+    api.verify_email(&auth_user.user_id).await.map_err(svc)?;
 
     Ok(Empty.into_common_response().to_json())
 }

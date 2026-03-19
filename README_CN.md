@@ -24,9 +24,12 @@ make postgres
 
 # 复制并编辑配置文件
 cp config/services-example.toml config/services.toml
+
+# 生成 Ed25519 密钥对（access + refresh）
+bash scripts/gen_jwt_keys.sh
 ```
 
-根据实际情况修改 `config/services.toml` 中的数据库地址和 JWT 密钥。
+根据实际情况修改 `config/services.toml` 中的数据库地址和 JWT issuer/audience。
 
 ### 2. 执行数据库迁移
 
@@ -37,7 +40,7 @@ make migrate-up
 ### 3. 启动服务
 
 ```bash
-cargo run -p web-server
+cargo run -p auth-server
 ```
 
 Swagger UI: <http://localhost:19878/swagger-ui>
@@ -103,10 +106,11 @@ Swagger UI: <http://localhost:19878/swagger-ui>
 port = 19878
 
 [jwt]
+issuer = "auth-server"
+audience = "test"
+key_dir = "config/key"
 access_token_duration = 10800   # 3 小时
 refresh_token_duration = 604800 # 1 周
-access_secret = "..."
-refresh_secret = "..."
 
 [[db]]
 name = "default"

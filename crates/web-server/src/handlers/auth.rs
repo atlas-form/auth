@@ -1,11 +1,10 @@
 use std::sync::Arc;
 
 use axum::{Extension, Json};
+use service::api::auth::AuthApi;
 use toolcraft_axum_kit::{ApiError, CommonOk, Empty, IntoCommonResponse, ResponseResult};
 use toolcraft_jwt::Jwt;
 use validator::Validate;
-
-use service::api::auth::AuthApi;
 
 use crate::{
     dto::auth::{
@@ -35,7 +34,9 @@ fn jwt_err() -> ApiError {
     )
 )]
 pub async fn register(Json(req): Json<RegisterRequest>) -> ResponseResult<Empty> {
-    req.validate().map_err(Error::Validation).map_err(ApiError::from)?;
+    req.validate()
+        .map_err(Error::Validation)
+        .map_err(ApiError::from)?;
 
     let api = AuthApi::new(get_default_ctx());
     api.register(service::dto::auth::RegisterRequest {
@@ -65,7 +66,9 @@ pub async fn login(
     Extension(jwt): Extension<Arc<Jwt>>,
     Json(req): Json<LoginRequest>,
 ) -> ResponseResult<LoginResponse> {
-    req.validate().map_err(Error::Validation).map_err(ApiError::from)?;
+    req.validate()
+        .map_err(Error::Validation)
+        .map_err(ApiError::from)?;
 
     let api = AuthApi::new(get_default_ctx());
     let user = api
@@ -76,12 +79,13 @@ pub async fn login(
         .await
         .map_err(svc)?;
 
-    let (access_token, refresh_token) =
-        jwt.generate_token_pair(user.id).map_err(|_| jwt_err())?;
+    let token_pair = jwt
+        .generate_token_pair_for_subject(user.id)
+        .map_err(|_| jwt_err())?;
 
     Ok(LoginResponse {
-        access_token,
-        refresh_token,
+        access_token: token_pair.access_token,
+        refresh_token: token_pair.refresh_token,
     }
     .into_common_response()
     .to_json())

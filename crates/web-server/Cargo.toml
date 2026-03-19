@@ -23,8 +23,8 @@ axum = {version = "0.8.8", features = ["macros", "multipart"]}
 utoipa = { version = "5", features = ["axum_extras"] }
 utoipa-swagger-ui = { version = "9", features = ["axum"] }
 utoipa-axum = { version = "0.2" }
-toolcraft-axum-kit = {version = "0.2.5"}
 toolcraft-config= {version = "0.2.0"}
-toolcraft-jwt= {version = "0.2.0"}
+toolcraft-axum-kit = {version = "0.2.8"}
+toolcraft-jwt= {version = "0.3.3"}
 toolcraft-utils= {version = "0.2.2"}
 

@@ -24,9 +24,12 @@ make postgres
 
 # Copy and edit config
 cp config/services-example.toml config/services.toml
+
+# Generate Ed25519 key pairs (access + refresh)
+bash scripts/gen_jwt_keys.sh
 ```
 
-Edit `config/services.toml` and update the database URL and JWT secrets as needed.
+Edit `config/services.toml` and update the database URL and JWT issuer/audience as needed.
 
 ### 2. Run Migrations
 
@@ -37,7 +40,7 @@ make migrate-up
 ### 3. Start the Server
 
 ```bash
-cargo run -p web-server
+cargo run -p auth-server
 ```
 
 Swagger UI: <http://localhost:19878/swagger-ui>
@@ -103,10 +106,11 @@ Swagger UI: <http://localhost:19878/swagger-ui>
 port = 19878
 
 [jwt]
+issuer = "auth-server"
+audience = "test"
+key_dir = "config/key"
 access_token_duration = 10800   # 3 hours
 refresh_token_duration = 604800 # 1 week
-access_secret = "..."
-refresh_secret = "..."
 
 [[db]]
 name = "default"

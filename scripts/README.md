@@ -62,6 +62,19 @@ Project initialization script.
 ./scripts/init.sh
 ```
 
+### gen_jwt_keys.sh
+
+Generate Ed25519 JWT key pairs for access/refresh tokens.
+
+**Usage:**
+```bash
+# default output: config/key
+./scripts/gen_jwt_keys.sh
+
+# custom output directory
+./scripts/gen_jwt_keys.sh /path/to/key-dir
+```
+
 ## Environment Setup
 
 Make sure you have `DATABASE_URL` set:
