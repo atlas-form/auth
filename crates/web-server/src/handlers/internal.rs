@@ -13,8 +13,8 @@ use toolcraft_axum_kit::{ApiError, IntoCommonResponse, ResponseResult};
 use crate::{
     dto::internal::{DisplayUserIdToUuidResponse, JwtVerifyConfigResponse},
     error::Error,
-    settings::{InternalAuthConfig, JwtVerifyConfig},
-    statics::db_manager::get_default_ctx,
+    settings::JwtVerifyConfig,
+    statics::{db_manager::get_default_ctx, internal_auth::get_internal_auth_config},
 };
 
 fn svc(e: db_core::Error) -> ApiError {
@@ -48,10 +48,10 @@ pub async fn display_user_id_to_uuid(
 }
 
 pub async fn internal_auth(
-    Extension(cfg): Extension<Arc<InternalAuthConfig>>,
     req: Request<axum::body::Body>,
     next: Next,
 ) -> Response {
+    let cfg = get_internal_auth_config();
     let token = req
         .headers()
         .get(&cfg.header_name)

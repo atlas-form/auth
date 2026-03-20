@@ -11,8 +11,8 @@ audience = "test"
 key_dir = "config/key"
 access_token_duration = 10800                                                                                                                       # 3 hours
 refresh_token_duration = 604800                                                                                                                     # 1 week
-access_key_validate_exp = false
-refresh_key_validate_exp = false
+access_key_validate_exp = true
+refresh_key_validate_exp = true
 
 [[db]]
 name = "default"
