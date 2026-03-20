@@ -2,10 +2,14 @@ use argon2::{
     Argon2,
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString, rand_core::OsRng},
 };
-use repo::db_core::{DbContext, Error, Result};
-use repo::table::users::{UpdateUser, UsersService};
+use repo::{
+    db_core::{DbContext, Error, Result},
+    table::users::{UpdateUser, UsersService},
+};
 
-use crate::dto::auth::{AuthUser, LoginRequest, RegisterRequest, UpdatePasswordRequest};
+use crate::dto::auth::{
+    AuthUser, LoginRequest, RegisterRequest, UpdatePasswordRequest, UpdateProfileRequest,
+};
 
 pub struct AuthApi {
     users_svc: UsersService,
@@ -21,7 +25,12 @@ impl AuthApi {
     /// 注册新用户（校验 username/email 唯一性，哈希密码）
     pub async fn register(&self, req: RegisterRequest) -> Result<AuthUser> {
         // 检查 username 是否已存在
-        if self.users_svc.find_by_username(&req.username).await?.is_some() {
+        if self
+            .users_svc
+            .find_by_username(&req.username)
+            .await?
+            .is_some()
+        {
             return Err(Error::already_exists("User", "username", &req.username));
         }
 
@@ -38,6 +47,8 @@ impl AuthApi {
             .users_svc
             .create(repo::table::users::CreateUser {
                 username: req.username,
+                display_name: req.display_name,
+                avatar: req.avatar,
                 password: hashed,
                 email: req.email,
             })
@@ -74,6 +85,17 @@ impl AuthApi {
             .find_by_id(id)
             .await?
             .ok_or_else(|| Error::not_found("User", id))?;
+
+        Ok(into_auth_user(user))
+    }
+
+    /// 通过 display_user_id 获取用户信息
+    pub async fn get_user_by_display_user_id(&self, display_user_id: &str) -> Result<AuthUser> {
+        let user = self
+            .users_svc
+            .find_by_display_user_id(display_user_id)
+            .await?
+            .ok_or_else(|| Error::not_found("User", display_user_id))?;
 
         Ok(into_auth_user(user))
     }
@@ -119,6 +141,22 @@ impl AuthApi {
                 UpdateUser {
                     email: Some(email),
                     email_verified: Some(false),
+                    ..Default::default()
+                },
+            )
+            .await?;
+
+        Ok(())
+    }
+
+    /// 更新用户基础资料
+    pub async fn update_profile(&self, id: &str, req: UpdateProfileRequest) -> Result<()> {
+        self.users_svc
+            .update(
+                id,
+                UpdateUser {
+                    display_name: req.display_name,
+                    avatar: req.avatar,
                     ..Default::default()
                 },
             )
@@ -190,7 +228,10 @@ fn verify_password(password: &str, hash: &str) -> Result<()> {
 fn into_auth_user(user: repo::table::users::User) -> AuthUser {
     AuthUser {
         id: user.id,
+        display_user_id: user.display_user_id,
         username: user.username,
+        display_name: user.display_name,
+        avatar: user.avatar,
         email: user.email,
         email_verified: user.email_verified,
         disabled: user.disabled,

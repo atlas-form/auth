@@ -1,6 +1,10 @@
 [http]
 port = 19878
 
+[internal]
+auth_header = "x-internal-token"
+auth_token = "replace-with-strong-internal-token"
+
 [jwt]
 issuer = "auth-server"
 audience = "test"
@@ -18,5 +22,4 @@ min_connections = 1
 connect_timeout = 30
 idle_timeout = 600
 sql_logging = false
-
 

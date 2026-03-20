@@ -13,6 +13,10 @@ pub struct Model {
     pub password: String,
     #[sea_orm(unique)]
     pub email: Option<String>,
+    pub avatar: Option<String>,
+    pub display_name: Option<String>,
+    #[sea_orm(unique)]
+    pub display_user_id: Option<String>,
     pub email_verified: bool,
     pub disabled: bool,
     pub created_at: TimeDateTimeWithTimeZone,

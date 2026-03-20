@@ -18,4 +18,3 @@ mod tests {
         let _config = db_core::DatabaseConfig::new("test", "postgres://localhost/test");
     }
 }
-

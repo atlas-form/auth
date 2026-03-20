@@ -7,3 +7,8 @@ pub struct JwtVerifyConfigResponse {
     pub issuer: String,
     pub audience: String,
 }
+
+#[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct DisplayUserIdToUuidResponse {
+    pub id: String,
+}

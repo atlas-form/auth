@@ -41,6 +41,8 @@ pub async fn register(Json(req): Json<RegisterRequest>) -> ResponseResult<Empty>
     let api = AuthApi::new(get_default_ctx());
     api.register(service::dto::auth::RegisterRequest {
         username: req.username,
+        display_name: req.display_name,
+        avatar: req.avatar,
         password: req.password,
         email: req.email,
     })

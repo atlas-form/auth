@@ -64,6 +64,7 @@ Swagger UI: <http://localhost:19878/swagger-ui>
 | GET    | `/me`            | Get current user     | Yes (Bearer)  |
 | PUT    | `/password`      | Update password      | Yes (Bearer)  |
 | PUT    | `/email`         | Update email         | Yes (Bearer)  |
+| PUT    | `/profile`       | Update display name and avatar | Yes (Bearer)  |
 | POST   | `/email/verify`  | Verify email         | Yes (Bearer)  |
 
 ---
@@ -91,7 +92,10 @@ Swagger UI: <http://localhost:19878/swagger-ui>
 | Column         | Type        | Notes                      |
 | -------------- | ----------- | -------------------------- |
 | id             | string (PK) | Unique user ID             |
+| display_user_id| string      | Public user ID, unique, nullable |
 | username       | string      | Unique                     |
+| display_name   | string      | Nullable                   |
+| avatar         | string      | Nullable (URL)             |
 | password       | string      | Hashed                     |
 | email          | string      | Nullable, unique           |
 | email_verified | boolean     | Default false              |

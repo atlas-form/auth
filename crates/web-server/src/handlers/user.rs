@@ -3,10 +3,11 @@ use service::api::auth::AuthApi;
 use toolcraft_axum_kit::{
     ApiError, CommonOk, Empty, IntoCommonResponse, ResponseResult, middleware::auth_mw::AuthUser,
 };
+use url::Url;
 use validator::Validate;
 
 use crate::{
-    dto::auth::{UpdateEmailRequest, UpdatePasswordRequest, UserResponse},
+    dto::auth::{UpdateEmailRequest, UpdatePasswordRequest, UpdateProfileRequest, UserResponse},
     error::Error,
     statics::db_manager::get_default_ctx,
 };
@@ -31,8 +32,10 @@ pub async fn me(Extension(auth_user): Extension<AuthUser>) -> ResponseResult<Use
     let user = api.get_user(&auth_user.user_id).await.map_err(svc)?;
 
     Ok(UserResponse {
-        id: user.id,
+        display_user_id: user.display_user_id,
         username: user.username,
+        display_name: user.display_name,
+        avatar: user.avatar,
         email: user.email,
         email_verified: user.email_verified,
         disabled: user.disabled,
@@ -103,6 +106,56 @@ pub async fn update_email(
         .map_err(svc)?;
 
     Ok(Empty.into_common_response().to_json())
+}
+
+#[utoipa::path(
+    put,
+    path = "/profile",
+    tag = "User",
+    security(("Bearer" = [])),
+    request_body = UpdateProfileRequest,
+    responses(
+        (status = 200, description = "Profile updated", body = CommonOk),
+        (status = 400, description = "Validation error"),
+        (status = 401, description = "Unauthorized"),
+    )
+)]
+pub async fn update_profile(
+    Extension(auth_user): Extension<AuthUser>,
+    Json(req): Json<UpdateProfileRequest>,
+) -> ResponseResult<Empty> {
+    validate_profile_patch(&req).map_err(ApiError::from)?;
+
+    let api = AuthApi::new(get_default_ctx());
+    api.update_profile(
+        &auth_user.user_id,
+        service::dto::auth::UpdateProfileRequest {
+            display_name: req.display_name,
+            avatar: req.avatar,
+        },
+    )
+    .await
+    .map_err(svc)?;
+
+    Ok(Empty.into_common_response().to_json())
+}
+
+fn validate_profile_patch(req: &UpdateProfileRequest) -> crate::error::Result<()> {
+    if let Some(Some(display_name)) = &req.display_name {
+        if display_name.is_empty() || display_name.chars().count() > 64 {
+            return Err(Error::Custom(
+                "display_name length must be between 1 and 64".to_string(),
+            ));
+        }
+    }
+
+    if let Some(Some(avatar)) = &req.avatar {
+        if Url::parse(avatar).is_err() {
+            return Err(Error::Custom("avatar must be a valid URL".to_string()));
+        }
+    }
+
+    Ok(())
 }
 
 #[utoipa::path(

@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use utoipa::ToSchema;
 use validator::Validate;
 
@@ -8,6 +8,10 @@ use validator::Validate;
 pub struct RegisterRequest {
     #[validate(length(min = 3, max = 32))]
     pub username: String,
+    #[validate(length(min = 1, max = 64))]
+    pub display_name: Option<String>,
+    #[validate(url)]
+    pub avatar: Option<String>,
     #[validate(length(min = 8, max = 128))]
     pub password: String,
     #[validate(email)]
@@ -44,6 +48,23 @@ pub struct UpdateEmailRequest {
     pub email: Option<String>,
 }
 
+#[derive(Debug, Deserialize, Validate, ToSchema)]
+pub struct UpdateProfileRequest {
+    #[serde(default, deserialize_with = "deserialize_optional_nullable_string")]
+    pub display_name: Option<Option<String>>,
+    #[serde(default, deserialize_with = "deserialize_optional_nullable_string")]
+    pub avatar: Option<Option<String>>,
+}
+
+fn deserialize_optional_nullable_string<'de, D>(
+    deserializer: D,
+) -> Result<Option<Option<String>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    Option::<Option<String>>::deserialize(deserializer)
+}
+
 // ── Responses ────────────────────────────────────────────────────────────────
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -62,8 +83,10 @@ pub struct RefreshTokenResponse {
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct UserResponse {
-    pub id: String,
+    pub display_user_id: Option<String>,
     pub username: String,
+    pub display_name: Option<String>,
+    pub avatar: Option<String>,
     pub email: Option<String>,
     pub email_verified: bool,
     pub disabled: bool,

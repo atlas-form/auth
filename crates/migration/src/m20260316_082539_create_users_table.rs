@@ -11,15 +11,13 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(Users::Table)
                     .if_not_exists()
-                    .col(
-                        ColumnDef::new(Users::Id)
-                            .string()
-                            .not_null()
-                            .primary_key(),
-                    )
+                    .col(ColumnDef::new(Users::Id).string().not_null().primary_key())
                     .col(ColumnDef::new(Users::Username).string().not_null())
                     .col(ColumnDef::new(Users::Password).string().not_null())
                     .col(ColumnDef::new(Users::Email).string().null())
+                    .col(ColumnDef::new(Users::Avatar).string().null())
+                    .col(ColumnDef::new(Users::DisplayName).string().null())
+                    .col(ColumnDef::new(Users::DisplayUserId).string().null())
                     .col(
                         ColumnDef::new(Users::EmailVerified)
                             .boolean()
@@ -68,6 +66,17 @@ impl MigrationTrait for Migration {
                     .unique()
                     .to_owned(),
             )
+            .await?;
+
+        manager
+            .create_index(
+                Index::create()
+                    .name("idx_users_display_user_id_unique")
+                    .table(Users::Table)
+                    .col(Users::DisplayUserId)
+                    .unique()
+                    .to_owned(),
+            )
             .await
     }
 
@@ -85,6 +94,9 @@ pub enum Users {
     Username,
     Password,
     Email,
+    Avatar,
+    DisplayName,
+    DisplayUserId,
     EmailVerified,
     Disabled,
     CreatedAt,

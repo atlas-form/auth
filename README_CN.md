@@ -64,6 +64,7 @@ Swagger UI: <http://localhost:19878/swagger-ui>
 | GET    | `/me`            | 获取当前用户信息 | 是（Bearer Token）|
 | PUT    | `/password`      | 修改密码         | 是（Bearer Token）|
 | PUT    | `/email`         | 修改邮箱         | 是（Bearer Token）|
+| PUT    | `/profile`       | 修改显示名和头像 | 是（Bearer Token）|
 | POST   | `/email/verify`  | 验证邮箱         | 是（Bearer Token）|
 
 ---
@@ -91,7 +92,10 @@ Swagger UI: <http://localhost:19878/swagger-ui>
 | 字段           | 类型        | 说明             |
 | -------------- | ----------- | ---------------- |
 | id             | string (PK) | 用户唯一 ID      |
+| display_user_id| string      | 对外展示 ID，可空且唯一 |
 | username       | string      | 唯一             |
+| display_name   | string      | 可为空           |
+| avatar         | string      | 可为空（URL）    |
 | password       | string      | 哈希存储         |
 | email          | string      | 可为空，唯一     |
 | email_verified | boolean     | 默认 false       |

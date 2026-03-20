@@ -13,12 +13,7 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(Mfa::Table)
                     .if_not_exists()
-                    .col(
-                        ColumnDef::new(Mfa::Id)
-                            .string()
-                            .not_null()
-                            .primary_key(),
-                    )
+                    .col(ColumnDef::new(Mfa::Id).string().not_null().primary_key())
                     .col(ColumnDef::new(Mfa::UserId).string().not_null())
                     .col(ColumnDef::new(Mfa::Secret).string().not_null())
                     .col(

@@ -53,11 +53,7 @@ fn error_to_api_error(err: Error) -> ApiError {
         Error::Core(e) => map_core_error(e),
         Error::Custom(message) => (
             StatusCode::BAD_REQUEST,
-            CommonError {
-                code: 400,
-                message,
-            }
-            .to_json(),
+            CommonError { code: 400, message }.to_json(),
         ),
     }
 }

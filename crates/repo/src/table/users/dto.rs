@@ -4,7 +4,10 @@ use time::OffsetDateTime;
 #[derive(Debug, Clone)]
 pub struct User {
     pub id: String,
+    pub display_user_id: Option<String>,
     pub username: String,
+    pub display_name: Option<String>,
+    pub avatar: Option<String>,
     pub password: String,
     pub email: Option<String>,
     pub email_verified: bool,
@@ -17,6 +20,8 @@ pub struct User {
 #[derive(Debug, Clone)]
 pub struct CreateUser {
     pub username: String,
+    pub display_name: Option<String>,
+    pub avatar: Option<String>,
     pub password: String,
     pub email: Option<String>,
 }
@@ -24,6 +29,8 @@ pub struct CreateUser {
 /// 更新用户参数（None 表示不修改该字段）
 #[derive(Debug, Clone, Default)]
 pub struct UpdateUser {
+    pub display_name: Option<Option<String>>,
+    pub avatar: Option<Option<String>>,
     pub password: Option<String>,
     /// None = 不修改；Some(None) = 清空；Some(Some(v)) = 设置新值
     pub email: Option<Option<String>>,
