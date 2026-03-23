@@ -47,10 +47,7 @@ pub async fn display_user_id_to_uuid(
         .to_json())
 }
 
-pub async fn internal_auth(
-    req: Request<axum::body::Body>,
-    next: Next,
-) -> Response {
+pub async fn internal_auth(req: Request<axum::body::Body>, next: Next) -> Response {
     let cfg = get_internal_auth_config();
     let token = req
         .headers()

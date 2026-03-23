@@ -29,6 +29,7 @@ struct ApiDoc;
 pub fn create_routes(
     jwt: Arc<Jwt>,
     jwt_verify_cfg: Arc<crate::settings::JwtVerifyConfig>,
+    avatar_url_cfg: Arc<crate::settings::AvatarUrlConfig>,
 ) -> Router {
     let cors = create_cors();
 
@@ -49,6 +50,7 @@ pub fn create_routes(
         .nest("/internal", internal_routes())
         .layer(Extension(jwt))
         .layer(Extension(jwt_verify_cfg))
+        .layer(Extension(avatar_url_cfg))
         .layer(cors)
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", doc))
 }
