@@ -229,13 +229,6 @@ fn validate_avatar_key(key: &str, cfg: &AvatarUrlConfig) -> crate::error::Result
         return Err(Error::Custom("avatar key format is invalid".to_string()));
     }
 
-    let bucket_prefix = format!("{}/", cfg.bucket.trim_matches('/'));
-    if key.starts_with(&bucket_prefix) {
-        return Err(Error::Custom(
-            "avatar must be object key only (bucket prefix is not allowed)".to_string(),
-        ));
-    }
-
     let endpoint = cfg.s3_endpoint.trim_end_matches('/');
     if key.starts_with(endpoint) {
         return Err(Error::Custom(
