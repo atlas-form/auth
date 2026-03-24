@@ -4,7 +4,8 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-db_core.workspace = true
+db-core.workspace = true
+error-code.workspace = true
 sea-orm = { version = "2.0.0-rc", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
 tokio.workspace = true
 thiserror.workspace = true

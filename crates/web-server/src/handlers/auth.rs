@@ -10,17 +10,9 @@ use crate::{
     dto::auth::{
         LoginRequest, LoginResponse, RefreshTokenRequest, RefreshTokenResponse, RegisterRequest,
     },
-    error::Error,
+    error::{Error, from_biz_error},
     statics::db_manager::get_default_ctx,
 };
-
-fn svc(e: db_core::Error) -> ApiError {
-    ApiError::from(Error::from(e))
-}
-
-fn jwt_err() -> ApiError {
-    ApiError::from(Error::Custom("Token generation failed".to_owned()))
-}
 
 #[utoipa::path(
     post,
@@ -47,7 +39,7 @@ pub async fn register(Json(req): Json<RegisterRequest>) -> ResponseResult<Empty>
         email: req.email,
     })
     .await
-    .map_err(svc)?;
+    .map_err(from_biz_error)?;
 
     Ok(Empty.into_common_response().to_json())
 }
@@ -79,11 +71,11 @@ pub async fn login(
             password: req.password,
         })
         .await
-        .map_err(svc)?;
+        .map_err(from_biz_error)?;
 
     let token_pair = jwt
         .generate_token_pair_for_subject(user.id)
-        .map_err(|_| jwt_err())?;
+        .map_err(Error::from)?;
 
     Ok(LoginResponse {
         access_token: token_pair.access_token,
@@ -109,7 +101,7 @@ pub async fn refresh_token(
 ) -> ResponseResult<RefreshTokenResponse> {
     let access_token = jwt
         .refresh_access_token(&req.refresh_token)
-        .map_err(|_| ApiError::from(Error::Custom("Invalid refresh token".to_owned())))?;
+        .map_err(Error::from)?;
 
     Ok(RefreshTokenResponse { access_token }
         .into_common_response()

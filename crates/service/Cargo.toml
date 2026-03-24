@@ -6,7 +6,9 @@ edition.workspace = true
 [dependencies]
 time.workspace = true
 thiserror.workspace = true
+db-core.workspace = true
 repo.workspace = true
+error-code.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 argon2 = { version = "0.5", features = ["password-hash"] }

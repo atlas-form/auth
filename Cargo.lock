@@ -365,7 +365,6 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "db-core-rs",
- "repo",
  "serde",
  "serde_json",
  "service",
@@ -892,9 +891,9 @@ dependencies = [
 
 [[package]]
 name = "db-core-rs"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "617510fc9939b999d510243b57b0238e648ba48091f499dfb2436b530bcb75a4"
+checksum = "9d9fd6770f3bf3c31704dbcd56c40ccba993a828459405cdeb2816491f494559"
 dependencies = [
  "async-trait",
  "sea-orm",
@@ -1100,6 +1099,10 @@ dependencies = [
  "libc",
  "windows-sys 0.61.2",
 ]
+
+[[package]]
+name = "error-code"
+version = "0.1.0"
 
 [[package]]
 name = "etcetera"
@@ -2574,6 +2577,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "db-core-rs",
+ "error-code",
  "sea-orm",
  "serde",
  "serde_json",
@@ -3094,6 +3098,8 @@ name = "service"
 version = "0.1.0"
 dependencies = [
  "argon2",
+ "db-core-rs",
+ "error-code",
  "repo",
  "serde",
  "serde_json",

@@ -2,10 +2,12 @@ use argon2::{
     Argon2,
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString, rand_core::OsRng},
 };
-use repo::{
-    db_core::{DbContext, Error, Result},
-    table::users::{UpdateUser, UsersService},
+use db_core::{
+    DbContext,
+    error::{BizError, BizResult},
 };
+use error_code::auth;
+use repo::table::users::{UpdateUser, UsersService};
 
 use crate::dto::auth::{
     AuthUser, LoginRequest, RegisterRequest, UpdatePasswordRequest, UpdateProfileRequest,
@@ -23,7 +25,7 @@ impl AuthApi {
     }
 
     /// 注册新用户（校验 username/email 唯一性，哈希密码）
-    pub async fn register(&self, req: RegisterRequest) -> Result<AuthUser> {
+    pub async fn register(&self, req: RegisterRequest) -> BizResult<AuthUser> {
         // 检查 username 是否已存在
         if self
             .users_svc
@@ -31,14 +33,20 @@ impl AuthApi {
             .await?
             .is_some()
         {
-            return Err(Error::already_exists("User", "username", &req.username));
+            return Err(BizError::new(
+                auth::USERNAME_ALREADY_EXISTS,
+                format!("User with username '{}' already exists", &req.username),
+            ));
         }
 
         // 检查 email 是否已存在
-        if let Some(ref email) = req.email {
-            if self.users_svc.find_by_email(email).await?.is_some() {
-                return Err(Error::already_exists("User", "email", email));
-            }
+        if let Some(ref email) = req.email
+            && self.users_svc.find_by_email(email).await?.is_some()
+        {
+            return Err(BizError::new(
+                auth::EMAIL_ALREADY_EXISTS,
+                format!("User with email '{}' already exists", email),
+            ));
         }
 
         let hashed = hash_password(&req.password)?;
@@ -58,7 +66,7 @@ impl AuthApi {
     }
 
     /// 登录（identifier 可以是 username 或 email）
-    pub async fn login(&self, req: LoginRequest) -> Result<AuthUser> {
+    pub async fn login(&self, req: LoginRequest) -> BizResult<AuthUser> {
         let user = self
             .users_svc
             .find_by_username(&req.identifier)
@@ -67,10 +75,18 @@ impl AuthApi {
                 // 尝试用 email 查找
                 self.users_svc.find_by_email(&req.identifier).await?,
             )
-            .ok_or_else(|| Error::not_found("User", &req.identifier))?;
+            .ok_or_else(|| {
+                BizError::new(
+                    auth::USER_NOT_FOUND,
+                    format!("User not found: {}", &req.identifier),
+                )
+            })?;
 
         if user.disabled {
-            return Err(Error::permission_denied("User account is disabled"));
+            return Err(BizError::new(
+                auth::USER_DISABLED,
+                "User account is disabled".into(),
+            ));
         }
 
         verify_password(&req.password, &user.password)?;
@@ -79,34 +95,35 @@ impl AuthApi {
     }
 
     /// 获取用户信息
-    pub async fn get_user(&self, id: &str) -> Result<AuthUser> {
-        let user = self
-            .users_svc
-            .find_by_id(id)
-            .await?
-            .ok_or_else(|| Error::not_found("User", id))?;
+    pub async fn get_user(&self, id: &str) -> BizResult<AuthUser> {
+        let user = self.users_svc.find_by_id(id).await?.ok_or_else(|| {
+            BizError::new(auth::USER_NOT_FOUND, format!("User not found: {}", id))
+        })?;
 
         Ok(into_auth_user(user))
     }
 
     /// 通过 display_user_id 获取用户信息
-    pub async fn get_user_by_display_user_id(&self, display_user_id: &str) -> Result<AuthUser> {
+    pub async fn get_user_by_display_user_id(&self, display_user_id: &str) -> BizResult<AuthUser> {
         let user = self
             .users_svc
             .find_by_display_user_id(display_user_id)
             .await?
-            .ok_or_else(|| Error::not_found("User", display_user_id))?;
+            .ok_or_else(|| {
+                BizError::new(
+                    auth::USER_NOT_FOUND,
+                    format!("User not found: {}", display_user_id),
+                )
+            })?;
 
         Ok(into_auth_user(user))
     }
 
     /// 修改密码（需要验证旧密码）
-    pub async fn update_password(&self, id: &str, req: UpdatePasswordRequest) -> Result<()> {
-        let user = self
-            .users_svc
-            .find_by_id(id)
-            .await?
-            .ok_or_else(|| Error::not_found("User", id))?;
+    pub async fn update_password(&self, id: &str, req: UpdatePasswordRequest) -> BizResult<()> {
+        let user = self.users_svc.find_by_id(id).await?.ok_or_else(|| {
+            BizError::new(auth::USER_NOT_FOUND, format!("User not found: {}", id))
+        })?;
 
         verify_password(&req.old_password, &user.password)?;
 
@@ -125,14 +142,16 @@ impl AuthApi {
     }
 
     /// 修改邮箱（清空 email_verified）
-    pub async fn update_email(&self, id: &str, email: Option<String>) -> Result<()> {
+    pub async fn update_email(&self, id: &str, email: Option<String>) -> BizResult<()> {
         // 检查新 email 是否被其他用户占用
-        if let Some(ref new_email) = email {
-            if let Some(existing) = self.users_svc.find_by_email(new_email).await? {
-                if existing.id != id {
-                    return Err(Error::already_exists("User", "email", new_email));
-                }
-            }
+        if let Some(ref new_email) = email
+            && let Some(existing) = self.users_svc.find_by_email(new_email).await?
+            && existing.id != id
+        {
+            return Err(BizError::new(
+                auth::EMAIL_ALREADY_EXISTS,
+                format!("User with email '{}' already exists", new_email),
+            ));
         }
 
         self.users_svc
@@ -150,7 +169,7 @@ impl AuthApi {
     }
 
     /// 更新用户基础资料
-    pub async fn update_profile(&self, id: &str, req: UpdateProfileRequest) -> Result<()> {
+    pub async fn update_profile(&self, id: &str, req: UpdateProfileRequest) -> BizResult<()> {
         self.users_svc
             .update(
                 id,
@@ -166,7 +185,7 @@ impl AuthApi {
     }
 
     /// 标记邮箱已验证
-    pub async fn verify_email(&self, id: &str) -> Result<()> {
+    pub async fn verify_email(&self, id: &str) -> BizResult<()> {
         self.users_svc
             .update(
                 id,
@@ -181,7 +200,7 @@ impl AuthApi {
     }
 
     /// 启用/禁用用户
-    pub async fn set_disabled(&self, id: &str, disabled: bool) -> Result<()> {
+    pub async fn set_disabled(&self, id: &str, disabled: bool) -> BizResult<()> {
         self.users_svc
             .update(
                 id,
@@ -196,12 +215,11 @@ impl AuthApi {
     }
 
     /// 删除用户
-    pub async fn delete_user(&self, id: &str) -> Result<()> {
+    pub async fn delete_user(&self, id: &str) -> BizResult<()> {
         // 确认用户存在
-        self.users_svc
-            .find_by_id(id)
-            .await?
-            .ok_or_else(|| Error::not_found("User", id))?;
+        self.users_svc.find_by_id(id).await?.ok_or_else(|| {
+            BizError::new(auth::USER_NOT_FOUND, format!("User not found: {}", id))
+        })?;
 
         self.users_svc.delete(id).await
     }
@@ -209,20 +227,21 @@ impl AuthApi {
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-fn hash_password(password: &str) -> Result<String> {
+fn hash_password(password: &str) -> BizResult<String> {
     let salt = SaltString::generate(&mut OsRng);
     let hash = Argon2::default()
         .hash_password(password.as_bytes(), &salt)
-        .map_err(|e| Error::internal(e.to_string()))?
+        .map_err(|e| BizError::new(auth::PASSWORD_HASH_FAILED, e.to_string()))?
         .to_string();
     Ok(hash)
 }
 
-fn verify_password(password: &str, hash: &str) -> Result<()> {
-    let parsed = PasswordHash::new(hash).map_err(|e| Error::internal(e.to_string()))?;
+fn verify_password(password: &str, hash: &str) -> BizResult<()> {
+    let parsed = PasswordHash::new(hash)
+        .map_err(|e| BizError::new(auth::PASSWORD_HASH_PARSE_FAILED, e.to_string()))?;
     Argon2::default()
         .verify_password(password.as_bytes(), &parsed)
-        .map_err(|_| Error::permission_denied("Invalid password"))
+        .map_err(|_| BizError::new(auth::PASSWORD_INVALID, "Invalid password".into()))
 }
 
 fn into_auth_user(user: repo::table::users::User) -> AuthUser {

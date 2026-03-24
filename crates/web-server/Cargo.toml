@@ -5,9 +5,8 @@ version.workspace = true
 
 [dependencies]
 # internal dependencies
-db_core.workspace = true
+db-core.workspace = true
 service.workspace = true
-repo.workspace = true
 
 # external dependencies
 tracing.workspace = true

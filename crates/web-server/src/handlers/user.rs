@@ -9,14 +9,10 @@ use validator::Validate;
 
 use crate::{
     dto::auth::{UpdateEmailRequest, UpdatePasswordRequest, UpdateProfileRequest, UserResponse},
-    error::Error,
+    error::{Error, from_biz_error},
     settings::AvatarUrlConfig,
     statics::db_manager::get_default_ctx,
 };
-
-fn svc(e: db_core::Error) -> ApiError {
-    ApiError::from(Error::from(e))
-}
 
 #[utoipa::path(
     get,
@@ -34,7 +30,10 @@ pub async fn me(
     Extension(avatar_cfg): Extension<std::sync::Arc<AvatarUrlConfig>>,
 ) -> ResponseResult<UserResponse> {
     let api = AuthApi::new(get_default_ctx());
-    let user = api.get_user(&auth_user.user_id).await.map_err(svc)?;
+    let user = api
+        .get_user(&auth_user.user_id)
+        .await
+        .map_err(from_biz_error)?;
     let avatar = build_avatar_response(user.avatar.as_deref(), &avatar_cfg);
 
     Ok(UserResponse {
@@ -80,7 +79,7 @@ pub async fn update_password(
         },
     )
     .await
-    .map_err(svc)?;
+    .map_err(from_biz_error)?;
 
     Ok(Empty.into_common_response().to_json())
 }
@@ -109,7 +108,7 @@ pub async fn update_email(
     let api = AuthApi::new(get_default_ctx());
     api.update_email(&auth_user.user_id, req.email)
         .await
-        .map_err(svc)?;
+        .map_err(from_biz_error)?;
 
     Ok(Empty.into_common_response().to_json())
 }
@@ -142,7 +141,7 @@ pub async fn update_profile(
         },
     )
     .await
-    .map_err(svc)?;
+    .map_err(from_biz_error)?;
 
     Ok(Empty.into_common_response().to_json())
 }
@@ -169,13 +168,12 @@ fn validate_profile_patch(
     req: &UpdateProfileRequest,
     cfg: &AvatarUrlConfig,
 ) -> crate::error::Result<()> {
-    if let Some(Some(display_name)) = &req.display_name {
-        if display_name.is_empty() || display_name.chars().count() > 64 {
+    if let Some(Some(display_name)) = &req.display_name
+        && (display_name.is_empty() || display_name.chars().count() > 64) {
             return Err(Error::Custom(
                 "display_name length must be between 1 and 64".to_string(),
             ));
         }
-    }
 
     if let Some(Some(avatar)) = &req.avatar {
         let key = avatar.trim();
@@ -305,7 +303,9 @@ fn build_avatar_response(avatar: Option<&str>, cfg: &AvatarUrlConfig) -> Option<
 )]
 pub async fn verify_email(Extension(auth_user): Extension<AuthUser>) -> ResponseResult<Empty> {
     let api = AuthApi::new(get_default_ctx());
-    api.verify_email(&auth_user.user_id).await.map_err(svc)?;
+    api.verify_email(&auth_user.user_id)
+        .await
+        .map_err(from_biz_error)?;
 
     Ok(Empty.into_common_response().to_json())
 }

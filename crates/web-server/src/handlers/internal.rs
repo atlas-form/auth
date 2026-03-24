@@ -8,18 +8,14 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use service::api::auth::AuthApi;
-use toolcraft_axum_kit::{ApiError, IntoCommonResponse, ResponseResult};
+use toolcraft_axum_kit::{IntoCommonResponse, ResponseResult};
 
 use crate::{
     dto::internal::{DisplayUserIdToUuidResponse, JwtVerifyConfigResponse},
-    error::Error,
+    error::from_biz_error,
     settings::JwtVerifyConfig,
     statics::{db_manager::get_default_ctx, internal_auth::get_internal_auth_config},
 };
-
-fn svc(e: db_core::Error) -> ApiError {
-    ApiError::from(Error::from(e))
-}
 
 pub async fn jwt_verify_config(
     Extension(cfg): Extension<Arc<JwtVerifyConfig>>,
@@ -40,7 +36,7 @@ pub async fn display_user_id_to_uuid(
     let user = api
         .get_user_by_display_user_id(&display_user_id)
         .await
-        .map_err(svc)?;
+        .map_err(from_biz_error)?;
 
     Ok(DisplayUserIdToUuidResponse { id: user.id }
         .into_common_response()

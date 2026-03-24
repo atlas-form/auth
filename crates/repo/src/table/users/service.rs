@@ -1,4 +1,8 @@
-use db_core::{DbContext, Error, Repository, Result};
+use db_core::{
+    DbContext, Repository,
+    error::{BizError, BizResult, Error},
+};
+use error_code::auth;
 use sea_orm::*;
 use time::OffsetDateTime;
 use uuid::Uuid;
@@ -19,7 +23,7 @@ impl UsersService {
         }
     }
 
-    pub async fn create(&self, input: CreateUser) -> Result<User> {
+    pub async fn create(&self, input: CreateUser) -> BizResult<User> {
         let now = OffsetDateTime::now_utc();
         let (id, display_user_id) = self.generate_unique_display_user_id().await?;
         let display_name = input.display_name.unwrap_or_else(|| input.username.clone());
@@ -40,12 +44,12 @@ impl UsersService {
         Ok(Self::from_model(result))
     }
 
-    pub async fn find_by_id(&self, id: &str) -> Result<Option<User>> {
+    pub async fn find_by_id(&self, id: &str) -> BizResult<Option<User>> {
         let model = self.repo.find_by_id(id.to_owned()).await?;
         Ok(model.map(Self::from_model))
     }
 
-    pub async fn find_by_username(&self, username: &str) -> Result<Option<User>> {
+    pub async fn find_by_username(&self, username: &str) -> BizResult<Option<User>> {
         let query = self
             .repo
             .query()
@@ -54,13 +58,13 @@ impl UsersService {
         Ok(model.map(Self::from_model))
     }
 
-    pub async fn find_by_email(&self, email: &str) -> Result<Option<User>> {
+    pub async fn find_by_email(&self, email: &str) -> BizResult<Option<User>> {
         let query = self.repo.query().filter(users::Column::Email.eq(email));
         let model = self.repo.select_one(query).await?;
         Ok(model.map(Self::from_model))
     }
 
-    pub async fn find_by_display_user_id(&self, display_user_id: &str) -> Result<Option<User>> {
+    pub async fn find_by_display_user_id(&self, display_user_id: &str) -> BizResult<Option<User>> {
         let query = self
             .repo
             .query()
@@ -69,12 +73,10 @@ impl UsersService {
         Ok(model.map(Self::from_model))
     }
 
-    pub async fn update(&self, id: &str, input: UpdateUser) -> Result<User> {
-        let existing = self
-            .repo
-            .find_by_id(id.to_owned())
-            .await?
-            .ok_or_else(|| Error::not_found("User", id))?;
+    pub async fn update(&self, id: &str, input: UpdateUser) -> BizResult<User> {
+        let existing = self.repo.find_by_id(id.to_owned()).await?.ok_or_else(|| {
+            BizError::new(auth::USER_NOT_FOUND, format!("User not found: {}", id))
+        })?;
 
         let mut model: users::ActiveModel = existing.into();
 
@@ -102,7 +104,7 @@ impl UsersService {
         Ok(Self::from_model(result))
     }
 
-    pub async fn delete(&self, id: &str) -> Result<()> {
+    pub async fn delete(&self, id: &str) -> BizResult<()> {
         self.repo.delete_by_id(id.to_owned()).await?;
         Ok(())
     }
@@ -123,7 +125,7 @@ impl UsersService {
         }
     }
 
-    async fn generate_unique_display_user_id(&self) -> Result<(String, String)> {
+    async fn generate_unique_display_user_id(&self) -> BizResult<(String, String)> {
         for _ in 0 .. 16 {
             let uuid = Uuid::new_v4();
             let display_user_id = short_id_from_uuid(uuid);
@@ -135,9 +137,10 @@ impl UsersService {
                 return Ok((uuid.to_string(), display_user_id));
             }
         }
-        Err(Error::internal(
-            "failed to generate unique display_user_id after retries",
-        ))
+        Err(
+            Error::Custom("failed to generate unique display_user_id after retries".to_string())
+                .into(),
+        )
     }
 }
 
