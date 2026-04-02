@@ -17,7 +17,7 @@ use crate::{
 #[utoipa::path(
     post,
     path = "/register",
-    tag = "Auth",
+    tag = "Session",
     request_body = RegisterRequest,
     responses(
         (status = 200, description = "Registered successfully", body = CommonOk),
@@ -47,7 +47,7 @@ pub async fn register(Json(req): Json<RegisterRequest>) -> ResponseResult<Empty>
 #[utoipa::path(
     post,
     path = "/login",
-    tag = "Auth",
+    tag = "Session",
     request_body = LoginRequest,
     responses(
         (status = 200, description = "Login successful", body = LoginResponse),
@@ -88,7 +88,7 @@ pub async fn login(
 #[utoipa::path(
     post,
     path = "/refresh_token",
-    tag = "Auth",
+    tag = "Session",
     request_body = RefreshTokenRequest,
     responses(
         (status = 200, description = "Token refreshed", body = RefreshTokenResponse),

@@ -49,7 +49,7 @@ Swagger UI: <http://localhost:19878/swagger-ui>
 
 ## API Endpoints
 
-### Auth (`/auth`)
+### Session (`/auth/session`)
 
 | Method | Path              | Description               | Auth Required |
 | ------ | ----------------- | ------------------------- | ------------- |
@@ -57,7 +57,7 @@ Swagger UI: <http://localhost:19878/swagger-ui>
 | POST   | `/login`          | Login, returns token pair | No            |
 | POST   | `/refresh_token`  | Refresh access token      | No            |
 
-### User (`/user`)
+### User (`/auth/user`)
 
 | Method | Path             | Description          | Auth Required |
 | ------ | ---------------- | -------------------- | ------------- |

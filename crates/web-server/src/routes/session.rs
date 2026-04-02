@@ -10,11 +10,11 @@ use crate::handlers::auth::{login, refresh_token, register};
         crate::handlers::auth::login,
         crate::handlers::auth::refresh_token,
     ),
-    tags((name = "Auth", description = "Authentication APIs")),
+    tags((name = "Session", description = "Authentication session APIs")),
 )]
-pub struct AuthApiDoc;
+pub struct SessionApiDoc;
 
-pub fn auth_routes() -> Router {
+pub fn session_routes() -> Router {
     Router::new()
         .route("/register", post(register))
         .route("/login", post(login))

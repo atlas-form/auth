@@ -1,12 +1,12 @@
-mod auth;
 mod internal;
+mod session;
 mod user;
 
 use std::sync::Arc;
 
-use auth::{AuthApiDoc, auth_routes};
 use axum::{Extension, Router};
 use internal::internal_routes;
+use session::{SessionApiDoc, session_routes};
 use toolcraft_axum_kit::{Empty, middleware::cors::create_cors};
 use toolcraft_jwt::Jwt;
 use user::{UserApiDoc, user_routes};
@@ -19,8 +19,8 @@ use utoipa_swagger_ui::SwaggerUi;
 #[derive(OpenApi)]
 #[openapi(
     nest(
-        (path = "/auth", api = AuthApiDoc),
-        (path = "/user", api = UserApiDoc),
+        (path = "/auth/session", api = SessionApiDoc),
+        (path = "/auth/user", api = UserApiDoc),
     ),
     components(schemas(Empty))
 )]
@@ -44,9 +44,12 @@ pub fn create_routes(
             ))),
         );
 
+    let auth_routes = Router::new()
+        .nest("/session", session_routes())
+        .nest("/user", user_routes());
+
     Router::new()
-        .nest("/auth", auth_routes())
-        .nest("/user", user_routes())
+        .nest("/auth", auth_routes)
         .nest("/internal", internal_routes())
         .layer(Extension(jwt))
         .layer(Extension(jwt_verify_cfg))
