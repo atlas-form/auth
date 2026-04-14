@@ -169,11 +169,12 @@ fn validate_profile_patch(
     cfg: &AvatarUrlConfig,
 ) -> crate::error::Result<()> {
     if let Some(Some(display_name)) = &req.display_name
-        && (display_name.is_empty() || display_name.chars().count() > 64) {
-            return Err(Error::Custom(
-                "display_name length must be between 1 and 64".to_string(),
-            ));
-        }
+        && (display_name.is_empty() || display_name.chars().count() > 64)
+    {
+        return Err(Error::Custom(
+            "display_name length must be between 1 and 64".to_string(),
+        ));
+    }
 
     if let Some(Some(avatar)) = &req.avatar {
         let key = avatar.trim();

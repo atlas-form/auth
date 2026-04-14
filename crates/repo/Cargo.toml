@@ -14,4 +14,4 @@ serde_json.workspace = true
 validator.workspace = true
 time.workspace = true
 async-trait.workspace = true
-uuid = { version = "1", features = ["v4"] }
+uuid.workspace = true

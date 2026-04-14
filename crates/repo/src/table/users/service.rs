@@ -44,8 +44,8 @@ impl UsersService {
         Ok(Self::from_model(result))
     }
 
-    pub async fn find_by_id(&self, id: &str) -> BizResult<Option<User>> {
-        let model = self.repo.find_by_id(id.to_owned()).await?;
+    pub async fn find_by_id(&self, id: Uuid) -> BizResult<Option<User>> {
+        let model = self.repo.find_by_id(id).await?;
         Ok(model.map(Self::from_model))
     }
 
@@ -73,8 +73,8 @@ impl UsersService {
         Ok(model.map(Self::from_model))
     }
 
-    pub async fn update(&self, id: &str, input: UpdateUser) -> BizResult<User> {
-        let existing = self.repo.find_by_id(id.to_owned()).await?.ok_or_else(|| {
+    pub async fn update(&self, id: Uuid, input: UpdateUser) -> BizResult<User> {
+        let existing = self.repo.find_by_id(id).await?.ok_or_else(|| {
             BizError::new(auth::USER_NOT_FOUND, format!("User not found: {}", id))
         })?;
 
@@ -104,8 +104,8 @@ impl UsersService {
         Ok(Self::from_model(result))
     }
 
-    pub async fn delete(&self, id: &str) -> BizResult<()> {
-        self.repo.delete_by_id(id.to_owned()).await?;
+    pub async fn delete(&self, id: Uuid) -> BizResult<()> {
+        self.repo.delete_by_id(id).await?;
         Ok(())
     }
 
@@ -125,7 +125,7 @@ impl UsersService {
         }
     }
 
-    async fn generate_unique_display_user_id(&self) -> BizResult<(String, String)> {
+    async fn generate_unique_display_user_id(&self) -> BizResult<(Uuid, String)> {
         for _ in 0 .. 16 {
             let uuid = Uuid::new_v4();
             let display_user_id = short_id_from_uuid(uuid);
@@ -134,7 +134,7 @@ impl UsersService {
                 .await?
                 .is_none()
             {
-                return Ok((uuid.to_string(), display_user_id));
+                return Ok((uuid, display_user_id));
             }
         }
         Err(

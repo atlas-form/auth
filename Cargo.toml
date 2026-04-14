@@ -28,6 +28,7 @@ validator = { version = "0.20", features = ["derive"] }
 time = { version = "0.3", features = ["macros", "serde", "formatting", "parsing"] }
 async-trait = "0.1"
 db-core = { package = "db-core-rs", version = "0.1.2"}
+uuid = { version = "1", features = ["v4", "serde"] }
 
 # individual crates
 repo = { path = "crates/repo" }

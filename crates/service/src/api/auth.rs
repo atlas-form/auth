@@ -8,6 +8,7 @@ use db_core::{
 };
 use error_code::auth;
 use repo::table::users::{UpdateUser, UsersService};
+use uuid::Uuid;
 
 use crate::dto::auth::{
     AuthUser, LoginRequest, RegisterRequest, UpdatePasswordRequest, UpdateProfileRequest,
@@ -96,6 +97,7 @@ impl AuthApi {
 
     /// 获取用户信息
     pub async fn get_user(&self, id: &str) -> BizResult<AuthUser> {
+        let id = parse_user_id(id)?;
         let user = self.users_svc.find_by_id(id).await?.ok_or_else(|| {
             BizError::new(auth::USER_NOT_FOUND, format!("User not found: {}", id))
         })?;
@@ -121,6 +123,7 @@ impl AuthApi {
 
     /// 修改密码（需要验证旧密码）
     pub async fn update_password(&self, id: &str, req: UpdatePasswordRequest) -> BizResult<()> {
+        let id = parse_user_id(id)?;
         let user = self.users_svc.find_by_id(id).await?.ok_or_else(|| {
             BizError::new(auth::USER_NOT_FOUND, format!("User not found: {}", id))
         })?;
@@ -143,6 +146,7 @@ impl AuthApi {
 
     /// 修改邮箱（清空 email_verified）
     pub async fn update_email(&self, id: &str, email: Option<String>) -> BizResult<()> {
+        let id = parse_user_id(id)?;
         // 检查新 email 是否被其他用户占用
         if let Some(ref new_email) = email
             && let Some(existing) = self.users_svc.find_by_email(new_email).await?
@@ -170,6 +174,7 @@ impl AuthApi {
 
     /// 更新用户基础资料
     pub async fn update_profile(&self, id: &str, req: UpdateProfileRequest) -> BizResult<()> {
+        let id = parse_user_id(id)?;
         self.users_svc
             .update(
                 id,
@@ -186,6 +191,7 @@ impl AuthApi {
 
     /// 标记邮箱已验证
     pub async fn verify_email(&self, id: &str) -> BizResult<()> {
+        let id = parse_user_id(id)?;
         self.users_svc
             .update(
                 id,
@@ -201,6 +207,7 @@ impl AuthApi {
 
     /// 启用/禁用用户
     pub async fn set_disabled(&self, id: &str, disabled: bool) -> BizResult<()> {
+        let id = parse_user_id(id)?;
         self.users_svc
             .update(
                 id,
@@ -216,6 +223,7 @@ impl AuthApi {
 
     /// 删除用户
     pub async fn delete_user(&self, id: &str) -> BizResult<()> {
+        let id = parse_user_id(id)?;
         // 确认用户存在
         self.users_svc.find_by_id(id).await?.ok_or_else(|| {
             BizError::new(auth::USER_NOT_FOUND, format!("User not found: {}", id))
@@ -246,7 +254,7 @@ fn verify_password(password: &str, hash: &str) -> BizResult<()> {
 
 fn into_auth_user(user: repo::table::users::User) -> AuthUser {
     AuthUser {
-        id: user.id,
+        id: user.id.to_string(),
         display_user_id: user.display_user_id,
         username: user.username,
         display_name: user.display_name,
@@ -257,4 +265,9 @@ fn into_auth_user(user: repo::table::users::User) -> AuthUser {
         created_at: user.created_at,
         updated_at: user.updated_at,
     }
+}
+
+fn parse_user_id(id: &str) -> BizResult<Uuid> {
+    Uuid::parse_str(id)
+        .map_err(|_| BizError::new(auth::USER_NOT_FOUND, format!("User not found: {}", id)))
 }

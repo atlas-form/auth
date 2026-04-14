@@ -1,9 +1,10 @@
 use time::OffsetDateTime;
+use uuid::Uuid;
 
 /// 完整用户数据，对应 users 表
 #[derive(Debug, Clone)]
 pub struct User {
-    pub id: String,
+    pub id: Uuid,
     pub display_user_id: Option<String>,
     pub username: String,
     pub display_name: Option<String>,
