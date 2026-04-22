@@ -37,6 +37,7 @@ pub async fn me(
     let avatar = build_avatar_response(user.avatar.as_deref(), &avatar_cfg);
 
     Ok(UserResponse {
+        id: user.id,
         display_user_id: user.display_user_id,
         username: user.username,
         display_name: user.display_name,

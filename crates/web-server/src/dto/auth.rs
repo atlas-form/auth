@@ -83,6 +83,7 @@ pub struct RefreshTokenResponse {
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct UserResponse {
+    pub id: String,
     pub display_user_id: Option<String>,
     pub username: String,
     pub display_name: Option<String>,
