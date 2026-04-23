@@ -69,13 +69,8 @@ impl AuthApi {
     /// 登录（identifier 可以是 username 或 email）
     pub async fn login(&self, req: LoginRequest) -> BizResult<AuthUser> {
         let user = self
-            .users_svc
-            .find_by_username(&req.identifier)
+            .find_user_by_identifier(&req.identifier)
             .await?
-            .or(
-                // 尝试用 email 查找
-                self.users_svc.find_by_email(&req.identifier).await?,
-            )
             .ok_or_else(|| {
                 BizError::new(
                     auth::USER_NOT_FOUND,
@@ -91,6 +86,21 @@ impl AuthApi {
         }
 
         verify_password(&req.password, &user.password)?;
+
+        Ok(into_auth_user(user))
+    }
+
+    /// 通过 identifier 获取用户信息（identifier 可以是 username 或 email）
+    pub async fn get_user_by_identifier(&self, identifier: &str) -> BizResult<AuthUser> {
+        let user = self
+            .find_user_by_identifier(identifier)
+            .await?
+            .ok_or_else(|| {
+                BizError::new(
+                    auth::USER_NOT_FOUND,
+                    format!("User not found: {}", identifier),
+                )
+            })?;
 
         Ok(into_auth_user(user))
     }
@@ -230,6 +240,17 @@ impl AuthApi {
         })?;
 
         self.users_svc.delete(id).await
+    }
+
+    async fn find_user_by_identifier(
+        &self,
+        identifier: &str,
+    ) -> BizResult<Option<repo::table::users::User>> {
+        Ok(self
+            .users_svc
+            .find_by_username(identifier)
+            .await?
+            .or(self.users_svc.find_by_email(identifier).await?))
     }
 }
 

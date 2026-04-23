@@ -1,7 +1,7 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use axum::{Extension, Json};
-use service::api::auth::AuthApi;
+use service::{api::auth::AuthApi, dto::auth::AuthUser as ServiceAuthUser};
 use toolcraft_axum_kit::{
     ApiError, CommonOk, Empty, IntoCommonResponse, ResponseResult, middleware::auth_mw::AuthUser,
 };
@@ -34,20 +34,10 @@ pub async fn me(
         .get_user(&auth_user.user_id)
         .await
         .map_err(from_biz_error)?;
-    let avatar = build_avatar_response(user.avatar.as_deref(), &avatar_cfg);
 
-    Ok(UserResponse {
-        id: user.id,
-        display_user_id: user.display_user_id,
-        username: user.username,
-        display_name: user.display_name,
-        avatar,
-        email: user.email,
-        email_verified: user.email_verified,
-        disabled: user.disabled,
-    }
-    .into_common_response()
-    .to_json())
+    Ok(build_user_response(user, &avatar_cfg)
+        .into_common_response()
+        .to_json())
 }
 
 #[utoipa::path(
@@ -290,6 +280,24 @@ fn build_avatar_response(avatar: Option<&str>, cfg: &AvatarUrlConfig) -> Option<
 
     parse_avatar_key_and_version(avatar)
         .map(|(key, version)| build_avatar_url(&key, version.as_deref(), cfg))
+}
+
+pub(crate) fn build_user_response(
+    user: ServiceAuthUser,
+    avatar_cfg: &AvatarUrlConfig,
+) -> UserResponse {
+    let avatar = build_avatar_response(user.avatar.as_deref(), avatar_cfg);
+
+    UserResponse {
+        id: user.id,
+        display_user_id: user.display_user_id,
+        username: user.username,
+        display_name: user.display_name,
+        avatar,
+        email: user.email,
+        email_verified: user.email_verified,
+        disabled: user.disabled,
+    }
 }
 
 #[utoipa::path(

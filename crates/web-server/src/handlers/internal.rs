@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use axum::{
     Extension,
-    extract::Path,
+    extract::{Path, Query},
     http::{Request, StatusCode},
     middleware::Next,
     response::{IntoResponse, Response},
@@ -11,8 +11,14 @@ use service::api::auth::AuthApi;
 use toolcraft_axum_kit::{IntoCommonResponse, ResponseResult};
 
 use crate::{
-    dto::internal::{DisplayUserIdToUuidResponse, JwtVerifyConfigResponse},
+    dto::{
+        auth::UserResponse,
+        internal::{
+            DisplayUserIdToUuidResponse, GetUserByIdentifierQuery, JwtVerifyConfigResponse,
+        },
+    },
     error::from_biz_error,
+    handlers::user::build_user_response,
     settings::JwtVerifyConfig,
     statics::{db_manager::get_default_ctx, internal_auth::get_internal_auth_config},
 };
@@ -39,6 +45,21 @@ pub async fn display_user_id_to_uuid(
         .map_err(from_biz_error)?;
 
     Ok(DisplayUserIdToUuidResponse { id: user.id }
+        .into_common_response()
+        .to_json())
+}
+
+pub async fn user_by_identifier(
+    Query(query): Query<GetUserByIdentifierQuery>,
+    Extension(avatar_cfg): Extension<Arc<crate::settings::AvatarUrlConfig>>,
+) -> ResponseResult<UserResponse> {
+    let api = AuthApi::new(get_default_ctx());
+    let user = api
+        .get_user_by_identifier(&query.identifier)
+        .await
+        .map_err(from_biz_error)?;
+
+    Ok(build_user_response(user, &avatar_cfg)
         .into_common_response()
         .to_json())
 }
