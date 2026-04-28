@@ -62,7 +62,28 @@ fn deserialize_optional_nullable_string<'de, D>(
 where
     D: Deserializer<'de>,
 {
-    Option::<Option<String>>::deserialize(deserializer)
+    Option::<String>::deserialize(deserializer).map(Some)
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::UpdateProfileRequest;
+
+    #[test]
+    fn update_profile_request_distinguishes_missing_null_and_value() {
+        let missing: UpdateProfileRequest = serde_json::from_value(json!({})).unwrap();
+        assert_eq!(missing.avatar, None);
+
+        let cleared: UpdateProfileRequest =
+            serde_json::from_value(json!({ "avatar": null })).unwrap();
+        assert_eq!(cleared.avatar, Some(None));
+
+        let updated: UpdateProfileRequest =
+            serde_json::from_value(json!({ "avatar": "avatars/user.png" })).unwrap();
+        assert_eq!(updated.avatar, Some(Some("avatars/user.png".to_string())));
+    }
 }
 
 // ── Responses ────────────────────────────────────────────────────────────────
